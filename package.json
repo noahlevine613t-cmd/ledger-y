@@ -1,0 +1,13 @@
+{
+  "name": "ledgerly-payment-tracker",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Vendor payment request tracker with Microsoft Outlook integration",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

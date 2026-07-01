@@ -1,0 +1,10 @@
+---
+deployment:
+  tasks:
+    - export DEPLOYPATH=/home/apthrue/ledgerly/
+    - /bin/cp -f index.html $DEPLOYPATH
+    - /bin/cp -f styles.css $DEPLOYPATH
+    - /bin/cp -f app.js $DEPLOYPATH
+    - /bin/cp -f server.js $DEPLOYPATH
+    - /bin/cp -f package.json $DEPLOYPATH
+    - /usr/bin/touch ${DEPLOYPATH}tmp/restart.txt

@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ledgerly — Vendor Payments</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand"><span class="brand-mark">L</span><span>Ledgerly</span></div>
+      <nav aria-label="Main navigation">
+        <a class="nav-item active" href="#"><span class="nav-icon">▦</span>Overview</a>
+        <a class="nav-item" href="#requests"><span class="nav-icon">↗</span>Requests <span class="nav-count" id="navCount">0</span></a>
+        <a class="nav-item" href="#vendors"><span class="nav-icon">♧</span>Vendors</a>
+        <a class="nav-item" href="#reports"><span class="nav-icon">⌁</span>Reports</a>
+      </nav>
+      <div class="sidebar-spacer"></div>
+      <div class="sync-card">
+        <div class="sync-icon">✉</div>
+        <strong id="emailSyncTitle">Outlook sync</strong>
+        <span id="emailSyncStatus">Checking connection…</span>
+        <button id="connectEmailBtn">Connect inbox</button>
+      </div>
+      <a class="nav-item" href="#settings"><span class="nav-icon">⚙</span>Settings</a>
+      <div class="user-card"><div class="avatar">JD</div><div><strong>Jordan Davis</strong><span>Finance team</span></div><button aria-label="Account menu">•••</button></div>
+    </aside>
+
+    <main>
+      <header class="topbar">
+        <div><p class="eyebrow">PAYMENT OPERATIONS</p><h1>Good morning, Jordan</h1><p class="subtitle" id="todayText"></p></div>
+        <div class="top-actions"><button class="icon-button" aria-label="Notifications">♢<span class="alert-dot"></span></button><button class="primary-button" id="newRequestBtn"><span>＋</span> New request</button></div>
+      </header>
+
+      <section class="attention-card">
+        <div class="attention-copy"><span class="attention-icon">!</span><div><strong><span id="needsCount">0</span> requests need your attention</strong><p>These have been waiting over 14 days or need a follow-up.</p></div></div>
+        <button class="text-button" id="reviewBtn">Review requests <span>→</span></button>
+      </section>
+
+      <section class="metrics" aria-label="Payment request summary">
+        <article class="metric-card"><div class="metric-top"><span class="metric-icon purple">↗</span><span class="trend up">↑ 12%</span></div><p>Open requests</p><strong id="openCount">0</strong><small>across <span id="vendorCount">0</span> vendors</small></article>
+        <article class="metric-card"><div class="metric-top"><span class="metric-icon green">$</span><span class="trend up">↑ 8.4%</span></div><p>Outstanding</p><strong id="outstandingTotal">$0</strong><small>total balance requested</small></article>
+        <article class="metric-card"><div class="metric-top"><span class="metric-icon orange">◷</span><span class="trend neutral" id="overduePill">0 overdue</span></div><p>Avg. request age</p><strong><span id="averageAge">0</span><em> days</em></strong><small>from initial request</small></article>
+        <article class="metric-card"><div class="metric-top"><span class="metric-icon blue">✓</span><span class="trend up">↑ 4%</span></div><p>Paid this month</p><strong id="paidTotal">$0</strong><small><span id="paidCount">0</span> payments completed</small></article>
+      </section>
+
+      <section class="request-section" id="requests">
+        <div class="section-header"><div><h2>Payment requests</h2><p>Track every vendor request from first email to payment.</p></div><button class="secondary-button" id="exportBtn">⇩ Export</button></div>
+        <div class="table-toolbar">
+          <div class="search-wrap"><span>⌕</span><input id="searchInput" type="search" placeholder="Search vendors or invoices…" /></div>
+          <div class="filters">
+            <select id="statusFilter" aria-label="Filter by status"><option value="all">All statuses</option><option value="Needs review">Needs review</option><option value="Awaiting approval">Awaiting approval</option><option value="Scheduled">Scheduled</option><option value="Paid">Paid</option></select>
+            <select id="ageFilter" aria-label="Filter by age"><option value="all">Any age</option><option value="14">14+ days</option><option value="30">30+ days</option></select>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Vendor</th><th>Amount</th><th>Requested</th><th>Last balance sent</th><th>Status</th><th>Owner</th><th></th></tr></thead>
+            <tbody id="requestRows"></tbody>
+          </table>
+          <div class="empty-state" id="emptyState" hidden><span>⌕</span><strong>No requests found</strong><p>Try changing your search or filters.</p></div>
+        </div>
+        <div class="table-footer"><span id="resultCount"></span><div class="pagination"><button disabled>←</button><button class="page active">1</button><button disabled>→</button></div></div>
+      </section>
+    </main>
+  </div>
+
+  <div class="overlay" id="drawerOverlay" hidden></div>
+  <aside class="drawer" id="requestDrawer" aria-hidden="true"><button class="drawer-close" id="drawerClose" aria-label="Close">×</button><div id="drawerContent"></div></aside>
+
+  <div class="modal-backdrop" id="modalBackdrop" hidden>
+    <section class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modal-header"><div><p class="eyebrow">NEW PAYMENT</p><h2 id="modalTitle">Add vendor request</h2></div><button class="drawer-close" id="modalClose" aria-label="Close">×</button></div>
+      <form id="requestForm">
+        <label>Vendor name<input name="vendor" required placeholder="e.g. Acme Services" /></label>
+        <div class="form-row"><label>Amount<input name="amount" required type="number" min="0" step="0.01" placeholder="0.00" /></label><label>Invoice number<input name="invoice" required placeholder="INV-1001" /></label></div>
+        <div class="form-row"><label>Request date<input name="requested" required type="date" /></label><label>Status<select name="status"><option>Needs review</option><option>Awaiting approval</option><option>Scheduled</option></select></label></div>
+        <label>Notes<textarea name="notes" rows="3" placeholder="Add context or payment terms…"></textarea></label>
+        <div class="modal-actions"><button type="button" class="secondary-button" id="cancelBtn">Cancel</button><button type="submit" class="primary-button">Add request</button></div>
+      </form>
+    </section>
+  </div>
+  <div class="modal-backdrop" id="outlookSetupBackdrop" hidden>
+    <section class="modal setup-modal" role="dialog" aria-modal="true" aria-labelledby="outlookSetupTitle">
+      <div class="modal-header"><div><p class="eyebrow">MICROSOFT OUTLOOK</p><h2 id="outlookSetupTitle">Connect your inbox</h2></div><button class="drawer-close" id="outlookSetupClose" aria-label="Close Outlook setup">×</button></div>
+      <p class="setup-intro">Ledgerly uses Microsoft’s secure sign-in and asks only for read access to your email. Your Outlook password is never shared with this dashboard.</p>
+      <ol class="setup-steps">
+        <li><span>1</span><div><strong>Register Ledgerly with Microsoft</strong><p>Create an app registration in Microsoft Entra.</p></div></li>
+        <li><span>2</span><div><strong>Add the local callback</strong><code>http://localhost:4173/auth/outlook/callback</code></div></li>
+        <li><span>3</span><div><strong>Add Mail.Read permission</strong><p>Then paste the client ID, tenant ID, and secret into the fields below.</p></div></li>
+      </ol>
+      <form id="outlookConfigForm" class="setup-form">
+        <label>Outlook account<input name="loginHint" type="email" value="nlevine@mintpurchasing.com" required /></label>
+        <label>Application (client) ID<input name="clientId" autocomplete="off" required placeholder="00000000-0000-0000-0000-000000000000" /></label>
+        <label>Directory (tenant) ID<input name="tenantId" autocomplete="off" required placeholder="00000000-0000-0000-0000-000000000000" /></label>
+        <label>Client secret value<input name="clientSecret" type="password" autocomplete="new-password" required placeholder="Paste the secret value" /></label>
+      </form>
+      <div class="privacy-note"><span>⌾</span><p><strong>Read-only by design</strong><br>Ledgerly cannot send, edit, or delete your email.</p></div>
+      <div class="modal-actions"><a class="secondary-button docs-link" href="https://entra.microsoft.com/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade" target="_blank" rel="noreferrer">Open Microsoft Entra</a><button class="primary-button" id="retryOutlookBtn" type="submit" form="outlookConfigForm">Save & connect</button></div>
+    </section>
+  </div>
+  <div class="toast" id="toast" role="status"></div>
+  <script src="app.js"></script>
+</body>
+</html>
