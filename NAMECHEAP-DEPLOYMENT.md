@@ -29,6 +29,8 @@ In **Setup Node.js App**, add these variables. Never upload a `.env` file contai
 - `MICROSOFT_CLIENT_SECRET` = the client secret **Value** from Entra
 - `MICROSOFT_REDIRECT_URI` = `https://app.aptracker.space/auth/outlook/callback`
 - `OUTLOOK_LOGIN_HINT` = `nlevine@mintpurchasing.com`
+- `LEDGERLY_USERNAME` = the email address allowed to sign in
+- `LEDGERLY_PASSWORD` = a long, unique password used only for Ledgerly
 
 Do not set `PORT`; Namecheap assigns the application port.
 
@@ -52,6 +54,6 @@ This first hosted version keeps payment requests in each browser's local storage
 
 ## GitHub updates
 
-The included `.cpanel.yml` deploys the five application files to `/home/apthrue/ledgerly/` and touches `tmp/restart.txt` so Passenger reloads the application.
+The included `.cpanel.yml` deploys the application files to `/home/apthrue/ledgerly/` and touches `tmp/restart.txt` so Passenger reloads the application.
 
 In cPanel **Git Version Control**, clone the GitHub repository into a separate path such as `/home/apthrue/repositories/ledgerly`. Do not clone it directly into the live application root. For each release, open **Manage → Pull or Deploy**, select **Update from Remote**, then **Deploy HEAD Commit**.

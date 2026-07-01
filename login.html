@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sign in — Ledgerly</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="login.css" />
+</head>
+<body>
+  <main class="login-shell">
+    <section class="brand-panel">
+      <div class="brand"><span>L</span>Ledgerly</div>
+      <div class="brand-copy"><p>PAYMENT OPERATIONS</p><h1>Every request.<br>Nothing forgotten.</h1><span>Keep vendor payments moving from first email through final approval.</span></div>
+      <div class="trust"><span>✓</span><div><strong>Private workspace</strong><small>Your payment dashboard is protected by a secure session.</small></div></div>
+    </section>
+    <section class="form-panel">
+      <div class="form-wrap">
+        <p class="eyebrow">WELCOME BACK</p>
+        <h2>Sign in to Ledgerly</h2>
+        <p class="intro">Enter your account details to open the payment dashboard.</p>
+        <div class="setup-warning" id="setupWarning" hidden><strong>Login setup required</strong><span>Add LEDGERLY_USERNAME and LEDGERLY_PASSWORD in your hosting environment.</span></div>
+        <form id="loginForm">
+          <label>Email address<input id="username" name="username" type="email" autocomplete="username" required placeholder="you@company.com" /></label>
+          <label>Password<div class="password-wrap"><input id="password" name="password" type="password" autocomplete="current-password" required placeholder="Enter your password" /><button type="button" id="togglePassword" aria-label="Show password">Show</button></div></label>
+          <p class="error" id="loginError" role="alert"></p>
+          <button class="submit" type="submit">Sign in <span>→</span></button>
+        </form>
+        <p class="footer-note">Protected access for authorized finance staff only.</p>
+      </div>
+    </section>
+  </main>
+  <script src="login.js"></script>
+</body>
+</html>

@@ -8,6 +8,8 @@ loadEnv(path.join(ROOT,'.env'));
 const PORT = Number(process.env.PORT || 4173);
 const HOST = process.env.HOST || (process.env.NODE_ENV === 'production' ? undefined : '127.0.0.1');
 const ALLOW_CONFIG_UI = process.env.ALLOW_CONFIG_UI !== 'false';
+const LEDGERLY_USERNAME = process.env.LEDGERLY_USERNAME || '';
+const LEDGERLY_PASSWORD = process.env.LEDGERLY_PASSWORD || '';
 let TENANT = process.env.MICROSOFT_TENANT_ID || 'common';
 let CLIENT_ID = process.env.MICROSOFT_CLIENT_ID || '';
 let CLIENT_SECRET = process.env.MICROSOFT_CLIENT_SECRET || '';
@@ -16,6 +18,7 @@ let LOGIN_HINT = process.env.OUTLOOK_LOGIN_HINT || 'nlevine@mintpurchasing.com';
 const SCOPES = 'openid profile email offline_access User.Read Mail.Read';
 const sessions = new Map();
 const authStates = new Map();
+const loginAttempts = new Map();
 
 function loadEnv(file){
   if(!fs.existsSync(file))return;
@@ -26,13 +29,15 @@ function loadEnv(file){
   }
 }
 function cookies(req){return Object.fromEntries((req.headers.cookie||'').split(';').filter(Boolean).map(v=>{const i=v.indexOf('=');return[decodeURIComponent(v.slice(0,i).trim()),decodeURIComponent(v.slice(i+1))];}));}
-function session(req,res){let sid=cookies(req).ledgerly_sid;if(!sid||!sessions.has(sid)){sid=crypto.randomBytes(24).toString('hex');sessions.set(sid,{created:Date.now()});res.setHeader('Set-Cookie',`ledgerly_sid=${sid}; HttpOnly; SameSite=Lax; Path=/; Max-Age=2592000`);}return sessions.get(sid);}
+function session(req,res){let sid=cookies(req).ledgerly_sid;if(!sid||!sessions.has(sid)){sid=crypto.randomBytes(24).toString('hex');sessions.set(sid,{created:Date.now(),authenticated:false});const secure=process.env.NODE_ENV==='production'?'; Secure':'';res.setHeader('Set-Cookie',`ledgerly_sid=${sid}; HttpOnly; SameSite=Lax; Path=/; Max-Age=2592000${secure}`);}return sessions.get(sid);}
 function json(res,status,data){res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'});res.end(JSON.stringify(data));}
 function redirect(res,url){res.writeHead(302,{Location:url,'Cache-Control':'no-store'});res.end();}
 function configured(){return Boolean(CLIENT_ID&&CLIENT_SECRET&&TENANT);}
 function randomBase64Url(bytes=32){return crypto.randomBytes(bytes).toString('base64url');}
 function mime(file){return({'.html':'text/html; charset=utf-8','.css':'text/css; charset=utf-8','.js':'text/javascript; charset=utf-8','.md':'text/markdown; charset=utf-8','.json':'application/json; charset=utf-8'}[path.extname(file)]||'application/octet-stream');}
 function readJson(req){return new Promise((resolve,reject)=>{let body='';req.on('data',chunk=>{body+=chunk;if(body.length>20000)reject(new Error('Request is too large'));});req.on('end',()=>{try{resolve(JSON.parse(body||'{}'));}catch{reject(new Error('Invalid request'));}});req.on('error',reject);});}
+function safeEqual(a,b){const ah=crypto.createHash('sha256').update(String(a)).digest(),bh=crypto.createHash('sha256').update(String(b)).digest();return crypto.timingSafeEqual(ah,bh);}
+function clientKey(req){return String(req.headers['x-forwarded-for']||req.socket.remoteAddress||'unknown').split(',')[0].trim();}
 async function tokenRequest(params){
   const response=await fetch(`https://login.microsoftonline.com/${encodeURIComponent(TENANT)}/oauth2/v2.0/token`,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams(params)});
   const data=await response.json();if(!response.ok)throw new Error(data.error_description||'Microsoft sign-in failed');return data;
@@ -55,6 +60,19 @@ function extractInvoice(message){
 }
 async function route(req,res){
   const url=new URL(req.url,`http://${req.headers.host}`);const s=session(req,res);
+  if(url.pathname==='/api/auth/status')return json(res,200,{configured:Boolean(LEDGERLY_USERNAME&&LEDGERLY_PASSWORD),authenticated:Boolean(s.authenticated),username:s.authenticated?LEDGERLY_USERNAME:null});
+  if(url.pathname==='/api/auth/login'&&req.method==='POST'){
+    if(!LEDGERLY_USERNAME||!LEDGERLY_PASSWORD)return json(res,503,{error:'Login has not been configured by the administrator'});
+    const key=clientKey(req),now=Date.now(),record=loginAttempts.get(key)||{count:0,since:now};if(now-record.since>15*60*1000){record.count=0;record.since=now;}if(record.count>=5)return json(res,429,{error:'Too many attempts. Try again in 15 minutes'});
+    try{const data=await readJson(req),validUser=safeEqual(String(data.username||'').trim().toLowerCase(),LEDGERLY_USERNAME.trim().toLowerCase()),validPassword=safeEqual(data.password||'',LEDGERLY_PASSWORD);if(!validUser||!validPassword){record.count++;loginAttempts.set(key,record);return json(res,401,{error:'Incorrect email or password'});}loginAttempts.delete(key);s.authenticated=true;s.loginAt=now;return json(res,200,{ok:true});}catch(err){return json(res,400,{error:err.message});}
+  }
+  if(url.pathname==='/api/auth/logout'&&req.method==='POST'){s.authenticated=false;delete s.accessToken;delete s.refreshToken;return json(res,200,{ok:true});}
+  const publicFiles=new Set(['/login.html','/login.css','/login.js']);
+  if(!s.authenticated&&!publicFiles.has(url.pathname)){
+    if(url.pathname.startsWith('/api/')||url.pathname.startsWith('/auth/'))return json(res,401,{error:'Authentication required'});
+    return redirect(res,'/login.html');
+  }
+  if(s.authenticated&&url.pathname==='/login.html')return redirect(res,'/');
   if(url.pathname==='/api/outlook/status')return json(res,200,{configured:configured(),connected:Boolean(s.refreshToken),email:s.email||null,loginHint:LOGIN_HINT,configurable:ALLOW_CONFIG_UI});
   if(url.pathname==='/api/outlook/config'&&req.method==='POST'){
     if(!ALLOW_CONFIG_UI)return json(res,403,{error:'Configure Microsoft credentials in the hosting environment'});

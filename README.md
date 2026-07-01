@@ -17,6 +17,11 @@ Run `start-dashboard.ps1`, then open `http://localhost:4173`. The app stores add
 - New request form
 - CSV export
 - Responsive layout
+- Mandatory server-enforced login with throttling and secure sessions
+
+## Dashboard login
+
+Set `LEDGERLY_USERNAME` and `LEDGERLY_PASSWORD` in the hosting environment. Ledgerly remains locked when either value is missing. Production cookies are HTTP-only, same-site, and secure; five failed attempts from one address trigger a 15-minute cooldown.
 
 ## Connect Microsoft Outlook
 

@@ -7,4 +7,7 @@ deployment:
     - /bin/cp -f app.js $DEPLOYPATH
     - /bin/cp -f server.js $DEPLOYPATH
     - /bin/cp -f package.json $DEPLOYPATH
+    - /bin/cp -f login.html $DEPLOYPATH
+    - /bin/cp -f login.css $DEPLOYPATH
+    - /bin/cp -f login.js $DEPLOYPATH
     - /usr/bin/touch ${DEPLOYPATH}tmp/restart.txt
